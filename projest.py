@@ -1,4 +1,4 @@
-# ATM Simulator
+import streamlit as st
 
 # Dummy data for a single account
 account = {
@@ -6,56 +6,60 @@ account = {
     "balance": 5000.0
 }
 
-def main_menu():
-    print("\n=== ATM Simulator ===")
-    print("1. Check Balance")
-    print("2. Deposit Money")
-    print("3. Withdraw Money")
-    print("4. Exit")
-    choice = input("Enter your choice: ")
-    return choice
+# Streamlit app
+st.title("💳 Basic ATM Simulator")
 
-def check_balance():
-    print(f"\nYour current balance is: ${account['balance']}")
+# Session state to track user authentication and account balance
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "balance" not in st.session_state:
+    st.session_state.balance = account["balance"]
 
-def deposit_money():
-    amount = float(input("\nEnter the amount to deposit: "))
-    if amount > 0:
-        account['balance'] += amount
-        print(f"${amount} deposited successfully!")
-    else:
-        print("Invalid amount entered.")
+# Login system
+if not st.session_state.authenticated:
+    st.subheader("🔑 Login")
+    pin = st.text_input("Enter your PIN", type="password")
+    if st.button("Login"):
+        if pin == account["pin"]:
+            st.session_state.authenticated = True
+            st.success("Authentication Successful!")
+        else:
+            st.error("Incorrect PIN. Please try again.")
+else:
+    # ATM menu options
+    st.subheader("🏦 ATM Menu")
+    choice = st.radio(
+        "Select an option:",
+        ("Check Balance", "Deposit Money", "Withdraw Money", "Logout")
+    )
 
-def withdraw_money():
-    amount = float(input("\nEnter the amount to withdraw: "))
-    if 0 < amount <= account['balance']:
-        account['balance'] -= amount
-        print(f"${amount} withdrawn successfully!")
-    elif amount > account['balance']:
-        print("Insufficient funds!")
-    else:
-        print("Invalid amount entered.")
+    # Check balance
+    if choice == "Check Balance":
+        st.write(f"💰 Your current balance is: **${st.session_state.balance:.2f}**")
 
-def atm_simulator():
-    # Authenticate user
-    pin = input("Enter your PIN: ")
-    if pin == account["pin"]:
-        print("\nAuthentication Successful!")
-        while True:
-            choice = main_menu()
-            if choice == "1":
-                check_balance()
-            elif choice == "2":
-                deposit_money()
-            elif choice == "3":
-                withdraw_money()
-            elif choice == "4":
-                print("\nThank you for using the ATM. Goodbye!")
-                break
+    # Deposit money
+    elif choice == "Deposit Money":
+        deposit_amount = st.number_input("Enter the amount to deposit:", min_value=0.0, step=0.01)
+        if st.button("Deposit"):
+            st.session_state.balance += deposit_amount
+            st.success(f"${deposit_amount:.2f} deposited successfully!")
+    
+    # Withdraw money
+    elif choice == "Withdraw Money":
+        withdraw_amount = st.number_input("Enter the amount to withdraw:", min_value=0.0, step=0.01)
+        if st.button("Withdraw"):
+            if 0 < withdraw_amount <= st.session_state.balance:
+                st.session_state.balance -= withdraw_amount
+                st.success(f"${withdraw_amount:.2f} withdrawn successfully!")
+            elif withdraw_amount > st.session_state.balance:
+                st.error("Insufficient funds!")
             else:
-                print("\nInvalid choice. Please try again.")
-    else:
-        print("\nIncorrect PIN. Access denied!")
+                st.error("Invalid amount entered.")
+    
+    # Logout
+    elif choice == "Logout":
+        st.session_state.authenticated = False
+        st.success("Logged out successfully!")
 
-# Run the ATM simulator
-atm_simulator()
+# Footer
+st.caption("Basic ATM Simulator | Made with 💻 in Python")
